@@ -1,0 +1,289 @@
+{% load static %}
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="all,follow">
+
+    <title>Bootstrap Admin Template </title>
+    <link rel="shortcut icon" href="img/favicon.ico">
+    
+    <!-- global stylesheets -->
+    <link href="https://fonts.googleapis.com/css?family=Roboto+Condensed" rel="stylesheet">
+	
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css'}">
+    <link rel="stylesheet" href="font-awesome.min.css">
+    <link rel="stylesheet" href="css/font-icon-style.css">
+    <link rel="stylesheet" href="css/style.default.css" id="theme-stylesheet">
+
+	<style>
+	body{
+		font-family:Microsoft YaHei;
+	}
+	#container{		/*容器*/
+		display:flex;
+		flex-wrap:wrap;
+		justify-content: center;
+		align-items:center;
+		padding:30px;
+	}
+	#table{		/*面板*/
+		background-color:#fff;
+		height: 500px;
+		width: 500px;
+		border:2px solid #778899;
+		border-radius:10px;
+	}
+	#head{		/*头部*/
+		width: 498px;
+		height:80px;
+		background-color: silver;
+		border-radius:10px 10px 0px 0px;
+		display:flex;
+		flex-wrap:wrap;
+		justify-content: center;
+		align-items:center;
+		box-shadow:-5px -5px 15px rgba(0,0,0,0.3) inset;
+	}
+	#screen{		/*显示屏*/
+		width: 370px;
+		height:300px;
+		margin: 12px;
+		background-color:#528B8B;
+		padding: 8px;
+		box-shadow:5px 5px 10px rgba(0,0,0,0.2) inset;
+		border:1px solid #778899;
+	}
+	#time{
+		width: 370px;
+		height: 50px;
+	}
+	#temperature_box{
+		width: 370px;
+		height:170px;
+	}
+	#info_box{
+		width:370px;
+		height:80px;
+	}
+	#const_set{
+		width: 140px;
+		height:190px;
+		text-align: right;
+		}
+	#temperature{
+		width: 185px;
+		height:190px;
+		font-size: 80px;
+		}
+	#outdoor_tmp{
+		width: 150px;
+		height: 40px;
+		}
+	#indoor_tmp{
+		width: 150px;
+		height: 40px;
+		}
+	#wind_speed{
+		width: 100px;
+		height: 40px;
+		}
+	#mode{
+		width: 100px;
+		height: 40px;
+	}
+	#fee{
+		width: 180px;
+		height: 40px;
+		}
+	
+	#wind_control{
+		width: 80px;
+		height: 290px;
+		padding:0px;
+		margin: 5px;
+		}
+	#main_control{
+		width:500px;
+		padding:10px;
+	}
+	button{
+		margin:0px 0px 14px;
+		width: 80px;
+		height:50px;
+	}
+	#btn_high{
+		background-color:yellow;
+	}
+	#btn_mid{
+		background-color:#7FFF00;
+	}
+	#btn_low{
+		background-color:#00BFFF;
+	}
+	#btn_mode{
+	}
+	#btn_down,#btn_up{
+		margin:0px 8px;
+		font-size: 40px;
+		width:170px;
+	}
+	#btn_power{
+		margin:10px 29px;
+		width: 40px;
+		height:40px;
+		border-radius:20px; 
+		background: url("开关.png") no-repeat;
+		background-size:cover;
+	}
+	</style>
+</head>
+
+<body style="background-color:#EEF5F9">
+	<div id="container">
+		<div id="table">
+			<div id="head">
+				<h2 style="color:white;font-weight:bold">空调控制面板</h2>
+			</div>
+			<span id="screen">
+				<span id="time">年月日 星期 --:--:--</span> 
+				<div id="temperature_box">
+					<span id="const_set">设置温度</span>
+					<span id="temperature">--℃</span>
+				</div>
+				<div id="info_box">
+					<span id="outdoor_tmp">室外温度：32℃</span>
+					<span id="wind_speed">风速：--</span>
+					<span id="mode">模式：--</span>
+					<span id="indoor_tmp">室内温度：24℃</span>
+					<span id="fee">费用：￥0.6</span>
+				</div>
+			</span>
+			<span id="wind_control">
+				<button id="btn_high" type="button" onclick='change_wind("high")'>高速</button>
+				<button id="btn_mid" type="button" onclick='change_wind("middle")'>中速</button>
+				<button id="btn_low" type="button" onclick='change_wind("low")'>低速</button>
+				<button id="btn_mode" type="button" onclick='change_mode()'>模式</button>
+				<button id="btn_save" type="button">保留</button>
+			</span>
+			<span id="main_control">
+				<button id="btn_up" type="button" onclick='change_tmp("up")'>△</button>
+				<button id="btn_down" type="button" onclick='change_tmp("down")'>▽</button>
+				<button id="btn_power" type="button" onclick="on_off()"></button>
+			</span>
+			<div id="button_up">
+			</div>
+		</div>
+	</div>
+</body>
+    <!--Global Javascript -->
+    <script src="js/jquery.min.js"></script>
+    <script src="js/popper/popper.min.js"></script>
+    <script src="js/tether.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/jquery.cookie.js"></script>
+    <script src="js/jquery.validate.min.js"></script> 
+    <script src="js/chart.min.js"></script> 
+    <script src="js/front.js"></script>
+	
+	<!--Core Javascript -->
+<script>
+	var on_flag = false;
+	var temperature = 26;
+	var wind_no = 1;
+	var mode_no = 0;
+	var max_temperature = 30;
+	var min_temperature = 18;
+	var windCh = new Array("低速","中速","高速");
+	var modeCh = new Array("制冷","制热","除湿","送风");
+	
+	setInterval("getTime();",1000);
+	
+	function on_off(){
+		if(Boolean(on_flag)){ //关机
+			$("#screen").css("background-color","#528B8B");
+			on_flag = false;
+			$("#temperature").html("--℃");
+			$("#wind_speed").html("风速：--");
+			$("#mode").html("模式：--");
+		}
+		else{	//开机
+			$("#screen").css("background-color","#97FFFF");
+			on_flag = true;
+			$("#temperature").html(temperature + "℃");
+			$("#wind_speed").html("风速："+windCh[wind_no]);
+			$("#mode").html("模式："+modeCh[mode_no]);
+		}
+		
+	}
+	
+	function change_tmp(attr){
+		if(on_flag==false)
+			return;
+		if(attr=="up"&&temperature<max_temperature){
+			temperature = temperature + 1;
+		}
+		if(attr=="down"&&temperature>min_temperature){
+			temperature = temperature - 1;
+		}
+		$("#temperature").html(temperature + "℃");
+	}
+	
+	function change_wind(attr){
+		if(on_flag==false)
+			return;
+		if(attr=="high"){
+			wind_no = 2;
+			
+		}
+		else if(attr=="middle"){
+			wind_no = 1;
+		}
+		else{ //低速
+			wind_no = 0;
+		}
+		$("#wind_speed").html("风速："+windCh[wind_no]);
+	}
+	
+	function change_mode(){
+		if(on_flag==false)
+			return;
+		mode_no = (mode_no + 1) % 4;
+		$("#mode").html("模式："+modeCh[mode_no]);
+	}
+
+	
+	function getTime(){
+		var myDate = new Date();
+		var year = myDate.getFullYear();
+		var month = myDate.getMonth()+1;
+		var day = myDate.getDate();
+		var weekday = myDate.getDay();
+		var weekdayCh = new Array("日","一","二","三","四","五","六");
+		var hours = myDate.getHours();
+		var minutes = myDate.getMinutes();
+		var seconds = myDate.getSeconds();
+		if(day<10){
+			day= "0" + day;
+		}
+		if(hours<10){
+			hours = "0" + hours;
+		}
+		if(minutes<10){
+			minutes = "0" + minutes;
+		}
+		if(seconds<10){
+			seconds = "0" + seconds;
+		}
+		
+		$("#time").html(year+"年"+month+"月"+day+"日\t星期"+weekdayCh[weekday]+"\t"+hours+":"+minutes+":"+seconds);
+		}
+		
+
+</script>
+
+
+</html>
