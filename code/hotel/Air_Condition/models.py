@@ -4,6 +4,7 @@ from django.utils import timezone
 # 下面这个网站提供了详细的字段类型参考，请大家仔细比较，选择最优字段类型。
 # note: https://docs.djangoproject.com/zh-hans/2.2/ref/models/fields/#field-types
 
+
 # Create your models here.
 class Scheduler(models.Model):
     """
@@ -16,11 +17,11 @@ class Scheduler(models.Model):
         (2, 'SHUTDOWN'),
     ]
 
-    # 正在对房间进行服务的服务对象数
+    # 服务对象数
     service_num = models.IntegerField(verbose_name='服务对象数', default=0)
 
-    # 发出请求的房间数
-    request_num = models.IntegerField(verbose_name='发出请求的房间数', default=0)
+    # 发出开机请求的房间数
+    request_num = models.IntegerField(verbose_name='发出开机请求的房间数', default=0)
 
     # 中控机所处的状态
     state = models.IntegerField(verbose_name='中控机状态', choices=STATE_CHOICE)
@@ -43,6 +44,9 @@ class Scheduler(models.Model):
     # 中风速时的费率
     fee_rate_m = models.FloatField(verbose_name="中风速费率", default=0.8)
 
+    # 创建的服务对象
+    servers = []
+
     def power_on(self):
         """
         开启中控机，中控机状态修改为”WORKING“
@@ -51,7 +55,26 @@ class Scheduler(models.Model):
         self.state = 1
 
     def request_on(self, room_id, current_room_temp):
-        pass
+        self.request_num += 1
+        return_list = []          # 返回列表
+        if self.service_num < 3:       #  服务对象数小于3，则创建一个服务对象
+            server = Server()
+            self.servers.append(server)
+            return_list = server.set_attribute(room_id, timezone.now(), current_room_temp)  # 初始化服务对象
+            self.service_num += 1  # 服务对象数增加
+            self.request_num -= 1
+        elif self.service_num >= 3:    # 服务对象数达到上限
+            flag = True  #  判断服务对象是否都在工作状态
+            for server in self.servers:
+                if server.state == 2:        # 此服务对象是空闲状态
+                    flag = False
+                    return_list = server.set_attribute(room_id, timezone.now(), current_room_temp)  # 将房间交给这个空闲的服务对象
+                    self.request_num -= 1
+                    break
+            if flag:           #  正在被服务的房间数等于3，即没有空闲的服务对象
+              # return_list = waiting_queue.requestOn(room_id, current_room_temp)  # 房间的开机请求进入等待队列,必须立即处理此请求
+               pass
+        return return_list      #返回房间的状态，目标温度，费率以及费用
 
     def set_service_num(self, service_num):
         """
@@ -64,17 +87,51 @@ class Scheduler(models.Model):
     def create_server(self):
         pass
 
-    def change_target_temp(self, room_id, target_temp):
-        pass
+    def change_target_temp(self, room_id, target_temp):   #处理调温请求
+        flag = 0     # 判断请求的房间是否在被服务
+        for server in self.servers:       # 查看请求的房间是否正在被服务
+            if server.room_id == room_id:
+                flag = 1
+                if server.change_target_temp(target_temp):    # 服务对象成功修改目标温度
+                    return True
+        if flag == 0:   # 发出请求的房间在等待队列中
+            #if waiting_queue.set_target_temp(room_id,target_temp)：   # 将请求交给等待队列
+            #     return True
+            pass
 
-    def change_fan_speed(self, fan_speed):
-        pass
+    def change_fan_speed(self, room_id, fan_speed):    # 处理调风请求
+        flag = 0  # 判断请求的房间是否在被服务
+        for server in self.servers:  # 查看请求的房间是否正在被服务
+            if server.room_id == room_id:
+                flag = 1
+                if server.change_fan_speed(fan_speed):    # 服务对象成功修改目标风速
+                    return True
+
+        if flag == 0:  # 发出请求的房间在等待队列中
+            # if waiting_queue.set_fan_speed(room_id,fan_speed):   # 将请求交给等待队列
+            #     return True
+            pass
 
     def check_room_state(self, list_room):
         pass
 
     def set_para(self, temp_high_limit, temp_low_limit, default_target_temp, fee_rate_h, fee_rate_l, fee_rate_m):
         pass
+
+    def request_off(self, room_id):   # 处理房间的关机请求(未开机时，不能发出关机请求)
+        flag = 0   # 判断请求的房间是否在被服务
+        fee = 0.0
+        for server in self.servers:          # 房间正在被服务
+            if server.room_id == room_id:
+                flag = 1
+                fee = server.delete_server()   # 删除房间与服务对象的关联
+                break
+
+        #  删除等待队列中的房间
+        if flag == 0:    # 发出请求的房间在等待队列中
+           # fee = waiting_queue.delete(room_id)
+           pass
+        return fee
 
 
 class Server(models.Model):
@@ -84,11 +141,11 @@ class Server(models.Model):
     """
     STATE_CHOICE = [
         (1, 'WORKING'),
-        (2, 'SHUTDOWN'),
+        (2, 'FREE'),
     ]
 
     # 服务对象的服务状态
-    state = models.IntegerField(verbose_name='服务状态', choices=STATE_CHOICE)
+    state = models.IntegerField(verbose_name='服务状态', choices=STATE_CHOICE, default=2)
 
     # 服务开始时间
     start_time = models.DateField(verbose_name="创建时间", default=timezone.now)
@@ -108,29 +165,36 @@ class Server(models.Model):
     # 服务对象所服务房间的费率
     fee_rate = models.FloatField(verbose_name='费率')
 
-    # 服务对象所服务的房间的风速
-    fan_speed = models.IntegerField(verbose_name='风速')
+    # 服务对象所服务的房间的风速,默认值为2--middle
+    fan_speed = models.IntegerField(verbose_name='风速', default=2)
 
-    # 问题：为什么要有room_id？一个服务对象的不是只对应一个room吗，它的属性也有room_id了呀?
     def set_attribute(self, room_id, start_time, current_room_temp):
         """
-        服务对象的服务状态，服务开始时间，目标温度，费率及费用值被赋值；
+        服务对象的初始化，与某一个房间关联起来；
         :param room_id:
         :param start_time:
         :param current_room_temp:
         :return:
         """
-        # self.room_id = room_id
-        # self.start_time = timezone.now()
-        pass
+        self.room_id = room_id
+        self.start_time = start_time
+        self.serve_time = 0.0
+        self.state = 1    # 状态为working
+        self.target_temp = 26
+        self.fan_speed = 2  # 默认为中速风2--middle
+        self.fee = 0.0
+        self.fee_rate = 0.8
+        return_list = [self.state, self.target_temp, self.fee_rate, self.fee]
+        return return_list
 
-    def change_target_temp(self,target_temp):
+    def change_target_temp(self, target_temp):
         """
         修改正在服务房间的目标温度
         :param target_temp:
         :return:
         """
-        pass
+        self.target_temp = target_temp
+        return True
 
     def change_fan_speed(self, fan_speed):
         """
@@ -138,29 +202,33 @@ class Server(models.Model):
         :param fan_speed:
         :return:
         """
-        pass
+        self.fan_speed = fan_speed
+        return True
 
-    def delete_server(self, room_id):
+    def delete_server(self):
         """
         删除服务对象与被服务房间的关联
-        :param room_id:
         :return:
         """
-        pass
+        #  将信息写入数据库
+        # 。。。
+        self.room_id = 0  # 将服务对象设置为空闲
+        self.state = 2   #  状态为FREE
+        return self.fee
 
     def set_serve_time(self):
         """
         修改服务时长
         :return:
         """
-        pass
+        self.serve_time = timezone.now() - self.start_time
 
-    def set_fee(self):
+    def set_fee(self, fee):
         """
         修改被服务房间的费用
         :return:
         """
-        pass
+        self.fee = fee
 
 
 class ServingQueue(models.Model):
@@ -174,6 +242,46 @@ class ServingQueue(models.Model):
 
     # 服务队列中该房间对象的服务时长
     serve_time = []
+
+
+class WaitingQueue(models.Model):
+    """
+    等待队列，存放所有等待服务的房间对象
+    """
+    room_list = []
+
+    def __init__(self):
+        super().__init__()
+        pass
+
+    def request_on(self, room_id, current_room_temp):   #处理开机请求，尽快处理，直接加入调度队列
+        pass
+
+    def set_target_temp(self, room_id, target_temp):
+        for room in self.room_list:
+            if room.room_id == room_id:
+                room.target_temp = target_temp
+                break
+        return True
+
+    def set_fan_speed(self, room_id, fan_speed):
+        for room in self.room_list:
+            if room.room_id == room_id:
+                room.fan_speed= fan_speed
+                break
+        return True
+
+    def delete(self, room_id):
+        #  将room_id 对应的房间信息写入数据库
+        for room in self.room_list:
+            if room.room_id == room_id:
+                fee = room.fee
+                self.room_list.remove(room)
+                break
+        return fee
+
+    def insert(self, room):
+        self.room_list.append(room)
 
 
 class Room(models.Model):
@@ -202,11 +310,16 @@ class Room(models.Model):
     fan_speed = models.IntegerField(verbose_name='风速', choices=FAN_SPEED)
 
     # 服务时长
-    duration = models.IntegerField(verbose_name='服务时长')
+    duration = models.FloatField(verbose_name='服务时长')
 
     # 服务状态
     state = models.IntegerField(verbose_name='服务状态', choices=ROOM_STATE)
 
+    # 费率
+    fee_rate = models.FloatField(verbose_name='费率')
+
+    # 费用
+    fee = models.FloatField(verbose_name='费用')
 
 class StatisticController(models.Model):
     """
