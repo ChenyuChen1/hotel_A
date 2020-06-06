@@ -1,0 +1,118 @@
+	body{
+		font-family:Microsoft YaHei;
+		background-color:#EEF5F9;
+	}
+	h2{
+		color:white;
+		font-weight:bold;
+	}
+	button{
+		margin:0px 0px 14px;
+		width: 80px;
+		height:50px;
+	}
+	
+	#container{		/*容器*/
+		display:flex;
+		flex-wrap:wrap;
+		justify-content: center;
+		align-items:center;
+		padding:30px;
+	}
+	#table{		/*面板*/
+		background-color:#fff;
+		height: 500px;
+		width: 500px;
+		border:2px solid #778899;
+		border-radius:10px;
+	}
+	#head{		/*头部*/
+		width: 504px;
+		height:80px;
+		background-color: silver;
+		border:solid 2px #778899;
+		border-radius:10px 10px 0px 0px;
+		justify-content: center;
+		text-align:center;
+		box-shadow:-5px -5px 15px rgba(0,0,0,0.3) inset;
+	}
+	#screen{		/*显示屏*/
+		width: 350px;
+		height:300px;
+		margin: 12px;
+		background-color:#528B8B;
+		padding: 8px;
+		box-shadow:5px 5px 10px rgba(0,0,0,0.2) inset;
+		border:1px solid #778899;
+	}
+	#time{
+		height: 50px;
+	}
+	#temperature_box{
+
+		height:170px;
+		text-align:center;
+	}
+	#info_box{
+
+	}
+	#const_set{
+		width: 140px;
+		height:190px;
+		text-align: right;
+		}
+	#temperature{
+		width: 185px;
+		height:190px;
+		font-size: 80px;
+		}
+	#outdoor_tmp{/*室外温度*/
+
+		}
+	#indoor_tmp{
+
+		}
+	#wind_speed{
+
+		}
+	#mode{
+
+	}
+	#fee{
+
+		}
+	
+	#wind_control{ /*空调控制 五个按钮*/
+		width: 80px;
+		padding:0px;
+
+		}
+	#main_control{/*常用控制 三个按钮*/
+		width:500px;
+		padding:10px;
+	}
+
+	#btn_high{
+		background-color:yellow;
+	}
+	#btn_mid{
+		background-color:#7FFF00;
+	}
+	#btn_low{
+		background-color:#00BFFF;
+	}
+	#btn_mode{
+	}
+	#btn_down,#btn_up{
+		margin:0px 8px;
+		font-size: 40px;
+		width:170px;
+	}
+	#btn_power{
+		margin:0px 0px 0px 30px;
+		width: 40px;
+		height:40px;
+		border-radius:20px; 
+		background: url("img/开关.png") no-repeat;
+		background-size:cover;
+	}

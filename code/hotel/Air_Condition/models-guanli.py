@@ -5,6 +5,7 @@ import threading
 # 下面这个网站提供了详细的字段类型参考，请大家仔细比较，选择最优字段类型。
 # note: https://docs.djangoproject.com/zh-hans/2.2/ref/models/fields/#field-types
 
+
 # Create your models here.
 class Scheduler(models.Model):
     """
@@ -14,10 +15,9 @@ class Scheduler(models.Model):
     STATE_CHOICE = [
         (1, 'WORKING'),
         (2, 'SHUTDOWN'),
-        (3, 'set_mode'),
-        (4,'ready')
+        (3, 'SETMODE'),
+        (4, 'READY')
     ]
-
 
     # 正在对房间进行服务的服务对象数
     service_num = models.IntegerField(verbose_name='服务对象数', default=0)
@@ -55,7 +55,6 @@ class Scheduler(models.Model):
         :return:
         """
         self.state = 3
-        self.servers.append(Server)
         self.service_num += 1
         return self.state
 
