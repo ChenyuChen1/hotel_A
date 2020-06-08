@@ -169,8 +169,8 @@ class Scheduler(models.Model):
         (4, 'READY')
     ]
 
-    # 发出开机请求的房间数
-    request_num = models.IntegerField(verbose_name='发出开机请求的房间数', default=0)
+    # 第一次发出开机请求的房间数
+    request_num = models.IntegerField(verbose_name='第一次发出开机请求的房间数', default=0)
 
     # 中控机所处的状态
     state = models.IntegerField(verbose_name='中控机状态', choices=STATE_CHOICE)
@@ -235,9 +235,6 @@ class Scheduler(models.Model):
         :return:
         """
         return_list = []          # 存储返回数据的列表
-        self.request_num += 1     # 发出开机请求的房间数加一
-        if self.request_num > 5:   # 只能有五个房间发出开机请求
-           return return_list     # 返回空列表
         flag = models.IntegerField(verbose_name='是否是第一次开机', default=1)
         for room in self.rooms:
             if room.room_id == room_id:    #不是第一次开机，直接处理
@@ -254,6 +251,9 @@ class Scheduler(models.Model):
                 room.request_time = timezone.now()
                 room.save(force_insert=True)
         if flag == 1:  #是第一次开机，先分配房间对象再处理
+            self.request_num += 1  # 发出第一次开机请求的房间数加一
+            if self.request_num > 5:  # 控制只能有五个房间开机
+                return return_list  # 返回空列表
             for room in self.rooms:
                 if room.room_id == 0:
                     room.room_id = room_id
