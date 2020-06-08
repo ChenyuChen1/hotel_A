@@ -2,6 +2,7 @@ from django.db import models
 from django.utils import timezone
 import threading
 
+
 # 下面这个网站提供了详细的字段类型参考，请大家仔细比较，选择最优字段类型。
 # note: https://docs.djangoproject.com/zh-hans/2.2/ref/models/fields/#field-types
 
@@ -26,7 +27,7 @@ class ServingQueue(models.Model):
         room.request_time = timezone.now()
         room.save(force_insert=True)
         self.room_list.append(room)
-        self.room_list.sort(key=lambda x: (room.fan_speed, room.request_time))  #按照风速排序,服务队列中风速优先
+        self.room_list.sort(key=lambda x: (room.fan_speed, room.request_time))  # 按照风速排序,服务队列中风速优先
         self.serving_num += 1
         return True
 
@@ -170,7 +171,7 @@ class Scheduler(models.Model):
     ]
 
     # 第一次发出开机请求的房间数
-    request_num = models.IntegerField(verbose_name='第一次发出开机请求的房间数', default=0)
+    request_num = 0
 
     # 中控机所处的状态
     state = models.IntegerField(verbose_name='中控机状态', choices=STATE_CHOICE)
@@ -235,12 +236,12 @@ class Scheduler(models.Model):
         :return:
         """
         return_list = []          # 存储返回数据的列表
-        flag = models.IntegerField(verbose_name='是否是第一次开机', default=1)
+        flag = 1
         for room in self.rooms:
-            if room.room_id == room_id:    #不是第一次开机，直接处理
+            if room.room_id == room_id:    # 不是第一次开机，直接处理
                 room.current_temp = current_room_temp
                 flag = 0
-                if self.SQ.serving_num < 3:  # 服务队列未满
+                if self.SQ.serving_num < 3:    # 服务队列未满
                     self.SQ.insert(room)
                 else:    # 服务队列已满
                     self.WQ.insert(room)
@@ -250,7 +251,7 @@ class Scheduler(models.Model):
                 #  写入数据库
                 room.request_time = timezone.now()
                 room.save(force_insert=True)
-        if flag == 1:  #是第一次开机，先分配房间对象再处理
+        if flag == 1:  # 是第一次开机，先分配房间对象再处理
             self.request_num += 1  # 发出第一次开机请求的房间数加一
             if self.request_num > 5:  # 控制只能有五个房间开机
                 return return_list  # 返回空列表
@@ -287,8 +288,6 @@ class Scheduler(models.Model):
         """
         self.service_num = service_num
 
-    def create_server(self):
-        pass
 
     def change_target_temp(self, room_id, target_temp):
         """
@@ -541,7 +540,7 @@ class Room(models.Model):
     ]
 
     # 请求发出时间
-    request_time = models.DateTimeField(verbose_name='请求发出时间', primary_key=True)
+    request_time = models.DateTimeField(verbose_name='请求发出时间')
 
     # 房间号，唯一表示房间
     room_id = models.IntegerField(verbose_name="房间号")
@@ -574,7 +573,7 @@ class Room(models.Model):
     wait_time = models.IntegerField(verbose_name='当前等待时长', default=0)
 
     # 初始化房间默认参数
-    def __init__(self, room_id, current_temp, target_temp, fan_speed):
+    def __init__(self, room_id, current_temp, target_temp=26, fan_speed=2):
         super().__init__()
         self.room_id = room_id
         self.current_temp = current_temp
@@ -588,6 +587,13 @@ class Room(models.Model):
         else:
             self.fee_rate = Scheduler.fee_rate_l
 
+    # def power_on(self):
+    #     """
+    #     房间空调开启
+    #     :return:
+    #     """
+
+
     def serve_time_plus(self):
         self.serve_time += 1
 
@@ -595,7 +601,7 @@ class Room(models.Model):
         self.wait_time += 1
 
     #  达到目标温度后等待的房间启动回温算法
-    def back_temp(self, mode): #mode=1制热 mode=2制冷,回温算法0.5℃/min，即0.008℃/min
+    def back_temp(self, mode): # mode=1制热 mode=2制冷,回温算法0.5℃/min，即0.008℃/min
         if self.state == 2:
             if mode == 1:
                 self.current_temp -= 0.008
@@ -605,6 +611,18 @@ class Room(models.Model):
                 self.current_temp += 0.008
                 timer = threading.Timer(1, self.back_temp, [2])  # 每五秒执行一次函数
                 timer.start()
+
+    def __str__(self):
+        return self.room_id
+
+
+#
+# class OperateList(models.Model):
+#     """
+#     该类用于存放每次空调状态变更的操作
+#     """
+#
+#     room_id =
 
 
 class StatisticController(models.Model):

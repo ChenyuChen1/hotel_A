@@ -16,8 +16,10 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from Air_Condition.views import index
+from django.urls import include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', index),
+    path('Air_Condition/', include('Air_Condition.urls'))
 ]

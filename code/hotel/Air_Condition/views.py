@@ -7,3 +7,10 @@ def index(request):
 
     # render函数：载入模板，并返回context对象
     return render(request, 'Air_Condition/index.html')
+
+
+def room1(request):
+
+
+
+    return render()
