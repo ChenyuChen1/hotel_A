@@ -135,7 +135,8 @@ $(document).ready(function(){
 							<div id="time">年月日 星期 --:--:--</div>
 							<div id="temperature_box">
 								<span id="const_set">设置温度</span>
-								<span id="temperature">--℃</span>
+<!--								<span id="temperature">&#45;&#45;℃</span>-->
+								<span id="temperature">{{ room.target_temp }}℃</span>
 							</div>
 							<table id="info_box">
 								<tr>
@@ -143,18 +144,20 @@ $(document).ready(function(){
 										<p id="outdoor_tmp">室外温度：32℃</p>
 									</td>
 									<td>
-										<p id="wind_speed">风速：--</p>
+<!--										<p id="wind_speed">风速：&#45;&#45;</p>-->
+										<p id="wind_speed">风速：{{ room.fan_speed }}</p>
 									</td>
 									<td>
-										<p id="mode">模式：--</p>
+<!--										<p id="mode">模式：&#45;&#45;</p>-->
+										<p id="mode">模式：{{ room.state }}</p>
 									</td>
 								</tr>
 								<tr>
 									<td>
-										<div id="indoor_tmp">室内温度：28℃</div>
+										<div id="indoor_tmp">室内温度：{{ room.current_temp }}</div>
 									</td>
 									<td>
-										<div id="fee" colspan="2">费用：￥{{ fee }}</div>
+										<div id="fee" colspan="2">费用：￥{{ room.fee }}</div>
 									</td>
 								</tr>
 							</table>
@@ -174,7 +177,7 @@ $(document).ready(function(){
 					<td colspan="2" id="main_control">
 						<button id="btn_up" type="button" >△</button>
 						<button id="btn_down" type="button" >▽</button>
-						<button id="btn_power" >{{ Scheduler.request_on }}</button>
+						<button id="btn_power" ></button>
 					</td>
 				</tr>
 			</table>

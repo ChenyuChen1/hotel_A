@@ -573,19 +573,19 @@ class Room(models.Model):
     wait_time = models.IntegerField(verbose_name='当前等待时长', default=0)
 
     # 初始化房间默认参数
-    def __init__(self, room_id, current_temp, target_temp=26, fan_speed=2):
-        super().__init__()
-        self.room_id = room_id
-        self.current_temp = current_temp
-        self.target_temp = target_temp
-        self.fan_speed = fan_speed
-        self.fee = 0
-        if self.fan_speed == 1:
-            self.fee_rate = Scheduler.fee_rate_h
-        elif self.fan_speed == 2:
-            self.fee_rate = Scheduler.fee_rate_m
-        else:
-            self.fee_rate = Scheduler.fee_rate_l
+    # def __init__(self, room_id=0, current_temp=26, target_temp=26, fan_speed=2):
+    #     super().__init__()
+    #     self.room_id = room_id
+    #     self.current_temp = current_temp
+    #     self.target_temp = target_temp
+    #     self.fan_speed = fan_speed
+    #     self.fee = 0
+    #     if self.fan_speed == 1:
+    #         self.fee_rate = Scheduler.fee_rate_h
+    #     elif self.fan_speed == 2:
+    #         self.fee_rate = Scheduler.fee_rate_m
+    #     else:
+    #         self.fee_rate = Scheduler.fee_rate_l
 
     # def power_on(self):
     #     """
@@ -593,12 +593,99 @@ class Room(models.Model):
     #     :return:
     #     """
 
-
     def serve_time_plus(self):
         self.serve_time += 1
+        self.save(update_fields=['serve_time'])
 
     def wait_time_plus(self):
         self.wait_time += 1
+        self.save(update_fields=['wait_time'])
+
+    def up_temp(self):
+        """
+        升高目标温度
+        :return:
+        """
+        self.target_temp += 1
+        self.save(update_fields=['target_temp'])
+        op = Operation(
+            room_id=self.room_id,
+            current_temp=self.current_temp,
+            target_temp=self.target_temp,
+            fan_speed=self.fan_speed,
+            fee=self.fee
+        )
+        op.save()
+
+    def down_temp(self):
+        """
+        降低目标温度
+        :return:
+        """
+        self.target_temp -= 1
+        self.save(update_fields=['target_temp'])
+        op = Operation(
+            room_id=self.room_id,
+            current_temp=self.current_temp,
+            target_temp=self.target_temp,
+            fan_speed=self.fan_speed,
+            fee=self.fee
+            )
+        op.save()
+
+    def change_speed2high(self):
+        """
+        设为高风速
+        :return:
+        """
+        if self.fan_speed == 1:
+            return
+        self.fan_speed = 1
+        self.save(update_fields=['fan_speed'])
+        op = Operation(
+            room_id=self.room_id,
+            current_temp=self.current_temp,
+            target_temp=self.target_temp,
+            fan_speed=self.fan_speed,
+            fee=self.fee
+        )
+        op.save()
+
+    def change_speed2middle(self):
+        """
+        设为中风速
+        :return:
+        """
+        if self.fan_speed == 2:
+            return
+        self.fan_speed = 2
+        self.save(update_fields=['fan_speed'])
+        op = Operation(
+            room_id=self.room_id,
+            current_temp=self.current_temp,
+            target_temp=self.target_temp,
+            fan_speed=self.fan_speed,
+            fee=self.fee
+        )
+        op.save()
+
+    def change_speed2low(self):
+        """
+        设为低风速
+        :return:
+        """
+        if self.fan_speed == 3:
+            return
+        self.fan_speed = 3
+        self.save(update_fields=['fan_speed'])
+        op = Operation(
+            room_id=self.room_id,
+            current_temp=self.current_temp,
+            target_temp=self.target_temp,
+            fan_speed=self.fan_speed,
+            fee=self.fee
+        )
+        op.save()
 
     #  达到目标温度后等待的房间启动回温算法
     def back_temp(self, mode): # mode=1制热 mode=2制冷,回温算法0.5℃/min，即0.008℃/min
@@ -612,17 +699,40 @@ class Room(models.Model):
                 timer = threading.Timer(1, self.back_temp, [2])  # 每五秒执行一次函数
                 timer.start()
 
-    def __str__(self):
-        return self.room_id
 
+class Operation(models.Model):
+    """
+    该类用于存放每次空调状态变更的操作
+    """
+    FAN_SPEED = [
+        (1, "HIGH"),
+        (2, "MIDDLE"),
+        (3, "LOW"),
+    ]
 
-#
-# class OperateList(models.Model):
-#     """
-#     该类用于存放每次空调状态变更的操作
-#     """
-#
-#     room_id =
+    # 请求发出时间
+    request_time = models.DateTimeField(verbose_name='创建时间', default=timezone.now)
+
+    # 发出请求的房间
+    room_id = models.IntegerField(verbose_name='发出请求的房间号')
+
+    # 房间当前温度、房间目标温度、房间风速、房间当前费用
+    current_temp = models.IntegerField(verbose_name="目标温度")
+
+    # 目标温度
+    target_temp = models.IntegerField(verbose_name="目标温度")
+
+    # 风速
+    fan_speed = models.IntegerField(verbose_name='风速', choices=FAN_SPEED)
+
+    # 费用
+    fee = models.FloatField(verbose_name='费用')
+
+    class Meta:
+        ordering = ('-request_time',)
+
+        # 这里通过 verbose_name 来指定对应的 model 在 admin 后台的显示名称
+        verbose_name = '操作列表'
 
 
 class StatisticController(models.Model):
