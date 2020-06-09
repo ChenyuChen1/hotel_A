@@ -225,7 +225,8 @@ class Scheduler(models.Model):
             if room.room_id == room_id:
                 room.init_temp = init_temp
 
-    def request_on(self, room_id, current_room_temp):
+    @classmethod
+    def request_on(cls, room_id, current_room_temp):
         """
         一个请求到来，第一次开机分配房间对象然后处理，否则直接处理
         调用调度算法
@@ -235,35 +236,35 @@ class Scheduler(models.Model):
         :param current_room_temp:
         :return:
         """
-        return_list = []          # 存储返回数据的列表
+        return_list = []  # 存储返回数据的列表
         flag = 1
-        for room in self.rooms:
-            if room.room_id == room_id:    # 不是第一次开机，直接处理
+        for room in cls.rooms:
+            if room.room_id == room_id:  # 不是第一次开机，直接处理
                 room.current_temp = current_room_temp
                 flag = 0
-                if self.SQ.serving_num < 3:    # 服务队列未满
-                    self.SQ.insert(room)
-                else:    # 服务队列已满
-                    self.WQ.insert(room)
-                    timer = threading.Timer(120, self.scheduling)  # 2min后执行调度函数
+                if cls.SQ.serving_num < 3:  # 服务队列未满
+                    cls.SQ.insert(room)
+                else:  # 服务队列已满
+                    cls.WQ.insert(room)
+                    timer = threading.Timer(120, cls.scheduling)  # 2min后执行调度函数
                     timer.start()
                 return_list = [room.state, room.target_temp, room.fan_speed, room.fee_rate, room.fee]
                 #  写入数据库
                 room.request_time = timezone.now()
                 room.save(force_insert=True)
         if flag == 1:  # 是第一次开机，先分配房间对象再处理
-            self.request_num += 1  # 发出第一次开机请求的房间数加一
-            if self.request_num > 5:  # 控制只能有五个房间开机
+            cls.request_num += 1  # 发出第一次开机请求的房间数加一
+            if cls.request_num > 5:  # 控制只能有五个房间开机
                 return return_list  # 返回空列表
-            for room in self.rooms:
+            for room in cls.rooms:
                 if room.room_id == 0:
                     room.room_id = room_id
                     room.current_temp = current_room_temp
-                    if self.SQ.serving_num < 3:  # 服务队列未满
-                        self.SQ.insert(room)
+                    if cls.SQ.serving_num < 3:  # 服务队列未满
+                        cls.SQ.insert(room)
                     else:  # 服务队列已满
-                        self.WQ.insert(room)
-                        timer = threading.Timer(120, self.scheduling)  # 2min后执行调度函数
+                        cls.WQ.insert(room)
+                        timer = threading.Timer(120, cls.scheduling)  # 2min后执行调度函数
                         timer.start()
                     return_list = [room.state, room.target_temp, room.fan_speed, room.fee_rate, room.fee]
                     #  写入数据库
@@ -271,14 +272,14 @@ class Scheduler(models.Model):
                     room.save(force_insert=True)
 
         #  只要服务队列有房间就计费和计温,mode=1,制热mode=2,制冷
-        if self.default_target_temp == 22:
-            self.SQ.auto_fee_temp(1)
+        if cls.default_target_temp == 22:
+            cls.SQ.auto_fee_temp(1)
         else:
-            self.SQ.auto_fee_temp(2)
+            cls.SQ.auto_fee_temp(2)
 
         #  只要有服务就检查是否有房间达到目标温度
-        self.check_target_arrive()
-        return return_list      # 返回房间的状态，目标温度，风速，费率以及费用
+        cls.check_target_arrive()
+        return return_list  # 返回房间的状态，目标温度，风速，费率以及费用
 
     def set_service_num(self, service_num):
         """
@@ -288,23 +289,24 @@ class Scheduler(models.Model):
         """
         self.service_num = service_num
 
-
-    def change_target_temp(self, room_id, target_temp):
+    @classmethod
+    def change_target_temp(cls, room_id, target_temp):
         """
         修改目标温度
         :param room_id:
         :param target_temp:
         :return:
         """
-        for room in self.rooms:
+        for room in cls.rooms:
             if room.room_id == room_id:
                 if room.state == 1:  # 在调度队列中
-                    self.SQ.set_target_temp(room_id, target_temp)
-                elif room.state == 2:  #  在等待队列中
-                    self.WQ.set_target_temp(room_id, target_temp)
+                    cls.SQ.set_target_temp(room_id, target_temp)
+                elif room.state == 2:  # 在等待队列中
+                    cls.WQ.set_target_temp(room_id, target_temp)
         return True
 
-    def change_fan_speed(self, room_id, fan_speed):
+    @classmethod
+    def change_fan_speed(cls, room_id, fan_speed):
         """
         处理调风请求
         :param room_id:
@@ -312,17 +314,17 @@ class Scheduler(models.Model):
         :return:
         """
         if fan_speed == 1:
-            fee_rate = self.fee_rate_h    #高风速时的费率
+            fee_rate = cls.fee_rate_h  # 高风速时的费率
         elif fan_speed == 2:
-            fee_rate = self.fee_rate_m    #中风速时的费率
+            fee_rate = cls.fee_rate_m  # 中风速时的费率
         else:
-            fee_rate = self.fee_rate_l    #低风速时的费率
-        for room in self.rooms:
+            fee_rate = cls.fee_rate_l  # 低风速时的费率
+        for room in cls.rooms:
             if room.room_id == room_id:
                 if room.state == 1:  # 在调度队列中
-                    self.SQ.set_fan_speed(room_id, fan_speed, fee_rate)
+                    cls.SQ.set_fan_speed(room_id, fan_speed, fee_rate)
                 elif room.state == 2:  # 在等待队列中
-                    self.WQ.set_fan_speed(room_id, fan_speed, fee_rate)
+                    cls.WQ.set_fan_speed(room_id, fan_speed, fee_rate)
         return fee_rate
 
     def check_room_state(self):
@@ -334,14 +336,15 @@ class Scheduler(models.Model):
         timer.start()
         #  return self.rooms
 
-    def update_room_state(self, room_id):
+    @classmethod
+    def update_room_state(cls, room_id):
         """
         每分钟查看一次房间状态
         :param room_id:
         :return:
         """
         return_list = []
-        for room in self.rooms:
+        for room in cls.rooms:
             if room.room_id == room_id:
                 return_list = [room.current_temp, room.target_temp, room.fan_speed, room.sate, room.fee_rate, room.fee]
                 break
@@ -374,24 +377,25 @@ class Scheduler(models.Model):
         self.state = 4
         return self.state
 
-    def request_off(self, room_id):
+    @classmethod
+    def request_off(cls, room_id):
         """
          # 处理房间的关机请求(未开机时，不能发出关机请求)
         :param room_id:
         :return:
         """
         fee = 0.0
-        for room in self.rooms:
+        for room in cls.rooms:
             if room.room_id == room_id:
                 fee = room.fee
                 room.current_temp = room.init_temp
                 #  关机回到初始温度
                 if room.state == 1:  # 在调度队列中
                     room.state = 3
-                    self.SQ.delete_room(room)
+                    cls.SQ.delete_room(room)
                 elif room.state == 2:  # 在等待队列中
                     room.state = 3
-                    self.WQ.delete_room(room)
+                    cls.WQ.delete_room(room)
         return fee
 
     def check_target_arrive(self):
@@ -473,7 +477,7 @@ class Server(models.Model):
         self.room_id = room_id
         self.start_time = start_time
         self.serve_time = 0.0
-        self.state = 1    # 状态为working
+        self.state = 1  # 状态为working
         self.target_temp = 26
         self.fan_speed = 2  # 默认为中速风2--middle
         self.fee = 0.0
@@ -507,7 +511,7 @@ class Server(models.Model):
         #  将信息写入数据库
         # 。。。
         self.room_id = 0  # 将服务对象设置为空闲
-        self.state = 2   #  状态为FREE
+        self.state = 2  # 状态为FREE
         return self.fee
 
     def set_serve_time(self):
@@ -526,7 +530,6 @@ class Server(models.Model):
 
 
 class Room(models.Model):
-
     FAN_SPEED = [
         (1, "HIGH"),
         (2, "MIDDLE"),
@@ -539,8 +542,8 @@ class Room(models.Model):
         (3, "SHUTDOWN"),
     ]
 
-    # 请求发出时间
-    request_time = models.DateTimeField(verbose_name='请求发出时间')
+    # 请求发出时间  (房间类里就不需要这个属性了，放在详单类里)
+    request_time = models.DateTimeField(verbose_name='请求发出时间', primary_key=True)
 
     # 房间号，唯一表示房间
     room_id = models.IntegerField(verbose_name="房间号")
@@ -572,7 +575,7 @@ class Room(models.Model):
     # 当前等待时长
     wait_time = models.IntegerField(verbose_name='当前等待时长', default=0)
 
-    # 初始化房间默认参数
+    #  初始化房间默认参数
     # def __init__(self, room_id=0, current_temp=26, target_temp=26, fan_speed=2):
     #     super().__init__()
     #     self.room_id = room_id
@@ -592,7 +595,7 @@ class Room(models.Model):
         房间空调开启
         :return:
         """
-        Scheduler.request_on()
+        Scheduler.request_on(self.room_id, self.current_temp)
 
     def serve_time_plus(self):
         self.serve_time += 1
@@ -617,6 +620,7 @@ class Room(models.Model):
             fee=self.fee
         )
         op.save()
+        Scheduler.change_target_temp(self.room_id, self.target_temp)
 
     def down_temp(self):
         """
@@ -631,8 +635,9 @@ class Room(models.Model):
             target_temp=self.target_temp,
             fan_speed=self.fan_speed,
             fee=self.fee
-            )
+        )
         op.save()
+        Scheduler.change_target_temp(self.room_id, self.target_temp)
 
     def change_speed2high(self):
         """
@@ -651,6 +656,8 @@ class Room(models.Model):
             fee=self.fee
         )
         op.save()
+        self.fee_rate = Scheduler.change_fan_speed(self.room_id, self.fan_speed)
+        self.save(update_fields=['fee_rate'])
 
     def change_speed2middle(self):
         """
@@ -669,6 +676,8 @@ class Room(models.Model):
             fee=self.fee
         )
         op.save()
+        self.fee_rate = Scheduler.change_fan_speed(self.room_id, self.fan_speed)
+        self.save(update_fields=['fee_rate'])
 
     def change_speed2low(self):
         """
@@ -687,16 +696,20 @@ class Room(models.Model):
             fee=self.fee
         )
         op.save()
+        self.fee_rate = Scheduler.change_fan_speed(self.room_id, self.fan_speed)
+        self.save(update_fields=['fee_rate'])
 
     #  达到目标温度后等待的房间启动回温算法
     def back_temp(self, mode):  # mode=1制热 mode=2制冷,回温算法0.5℃/min，即0.008℃/min
         if self.state == 2:
             if mode == 1:
                 self.current_temp -= 0.008
+                self.save(update_fields=['current_temp'])
                 timer = threading.Timer(1, self.back_temp, [1])  # 每五秒执行一次函数
                 timer.start()
             else:
                 self.current_temp += 0.008
+                self.save(update_fields=['current_temp'])
                 timer = threading.Timer(1, self.back_temp, [2])  # 每五秒执行一次函数
                 timer.start()
 
@@ -787,7 +800,7 @@ class StatisticController(models.Model):
         :return:
         """
 
-    def create_report(self,list_room_id, type_report, date):
+    def create_report(self, list_room_id, type_report, date):
         """
         创建报告
         :param list_room_id:房间列表
@@ -796,7 +809,7 @@ class StatisticController(models.Model):
         :return:
         """
 
-    def print_report(self,list_room_id, type_report, date):
+    def print_report(self, list_room_id, type_report, date):
         """
         打印报告
         :param list_room_id:房间列表
