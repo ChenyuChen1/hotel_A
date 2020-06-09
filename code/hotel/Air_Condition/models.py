@@ -587,11 +587,12 @@ class Room(models.Model):
     #     else:
     #         self.fee_rate = Scheduler.fee_rate_l
 
-    # def power_on(self):
-    #     """
-    #     房间空调开启
-    #     :return:
-    #     """
+    def power_on(self):
+        """
+        房间空调开启
+        :return:
+        """
+        Scheduler.request_on()
 
     def serve_time_plus(self):
         self.serve_time += 1
@@ -688,7 +689,7 @@ class Room(models.Model):
         op.save()
 
     #  达到目标温度后等待的房间启动回温算法
-    def back_temp(self, mode): # mode=1制热 mode=2制冷,回温算法0.5℃/min，即0.008℃/min
+    def back_temp(self, mode):  # mode=1制热 mode=2制冷,回温算法0.5℃/min，即0.008℃/min
         if self.state == 2:
             if mode == 1:
                 self.current_temp -= 0.008
