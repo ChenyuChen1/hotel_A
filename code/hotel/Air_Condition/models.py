@@ -174,7 +174,7 @@ class Scheduler(models.Model):
     request_num = 0
 
     # 中控机所处的状态
-    state = models.IntegerField(verbose_name='中控机状态', choices=STATE_CHOICE)
+    state = models.IntegerField(verbose_name='中控机状态', choices=STATE_CHOICE, default=2)
 
     # 最高温度限制
     temp_high_limit = models.IntegerField(verbose_name='最高温度限制', default=0)
@@ -211,7 +211,7 @@ class Scheduler(models.Model):
         """
         self.state = 3
         for i in range(5):
-            self.rooms.append(Room(0, 0, 0, 0))
+            self.rooms.append(Room(0, 0, 0, 0, room_id=i))
         return self.state
 
     def set_init_temp(self, room_id, init_temp):
@@ -346,9 +346,11 @@ class Scheduler(models.Model):
         return_list = []
         for room in cls.rooms:
             if room.room_id == room_id:
-                return_list = [room.current_temp, room.target_temp, room.fan_speed, room.sate, room.fee_rate, room.fee]
-                break
-        return return_list
+                # return_list = [room.current_temp, room.target_temp, room.fan_speed, room.sate, room.fee_rate, room.fee]
+                #return_list = {"room.current_temp": room.current_temp, "room.target_temp":room.target_temp, "room.fan_speed":room.fan_speed, "room.sate":room.sate, room.fee_rate, room.fee}
+                return room
+                #break
+        #return return_list
 
     def set_para(self, temp_high_limit, temp_low_limit, default_target_temp, fee_rate_h, fee_rate_l, fee_rate_m):
         """

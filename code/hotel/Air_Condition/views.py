@@ -13,3 +13,4 @@ def index(request):
 def room1(request):
     room = Room.objects.filter(room_id=1)
     return render(request, 'Air_Condition/index', context={'room': room})
+
