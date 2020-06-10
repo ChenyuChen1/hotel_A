@@ -1,6 +1,10 @@
 from django.db import models
 from django.utils import timezone
 import threading
+import csv
+from django.http import HttpResponse
+import csv
+from datetime import datetime
 
 
 # 下面这个网站提供了详细的字段类型参考，请大家仔细比较，选择最优字段类型。
@@ -345,12 +349,15 @@ class Scheduler(models.Model):
         """
         return_list = []
         for room in cls.rooms:
+            print(room.room_id)
             if room.room_id == room_id:
                 # return_list = [room.current_temp, room.target_temp, room.fan_speed, room.sate, room.fee_rate, room.fee]
-                #return_list = {"room.current_temp": room.current_temp, "room.target_temp":room.target_temp, "room.fan_speed":room.fan_speed, "room.sate":room.sate, room.fee_rate, room.fee}
+                # return_list = {"room.current_temp": room.current_temp, "room.target_temp":room.target_temp, "room.fan_speed":room.fan_speed, "room.sate":room.sate, room.fee_rate, room.fee}
                 return room
-                #break
-        #return return_list
+        print("没有返回对象")
+
+        # break
+        # return return_list
 
     def set_para(self, temp_high_limit, temp_low_limit, default_target_temp, fee_rate_h, fee_rate_l, fee_rate_m):
         """
@@ -715,6 +722,13 @@ class Room(models.Model):
                 timer = threading.Timer(1, self.back_temp, [2])  # 每五秒执行一次函数
                 timer.start()
 
+    class Meta:
+        ordering = ('-request_time',)
+
+        # 这里通过 verbose_name 来指定对应的 model 在 admin 后台的显示名称
+        verbose_name = '操作列表'
+        verbose_name_plural = verbose_name
+
 
 class Operation(models.Model):
     """
@@ -757,7 +771,8 @@ class StatisticController(models.Model):
     - 作用：负责读数据库的控制器，为前台生成详单、账单
     """
 
-    def reception_login(self, id, password):
+    @staticmethod
+    def reception_login(id, password):
         """
         感觉放在这里不是特别好，应该放在view层
         如何登录请看:https://docs.djangoproject.com/zh-hans/2.2/topics/auth/default/#how-to-log-a-user-in
@@ -766,16 +781,27 @@ class StatisticController(models.Model):
         :return:
         """
 
-    def create_rdr(self, room_id, begin_date, end_date):
+    @staticmethod
+    def create_rdr(room_id, begin_date, end_date):
         """
         创建详单
         :param room_id: 房间号
         :param begin_date: 起始日期
         :param end_date: endDay
-        :return:
+        :return: 直接返回httpresponse，
         """
+        rdr = Room.objects.filter(room_id=room_id, request_time__range=(begin_date, end_date)) \
+            .values('request_time', 'room_id', "current_temp", "target_temp", 'fan_speed', "fee")
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="rdr.csv"'
+        writer = csv.writer(response)
+        writer.writerow(['request_time', 'room_id', 'current_temp', 'target_temp', 'fan_speed', 'fee'])
+        for operation in rdr:
+            writer.writerow(operation)
+        return response
 
-    def create_bill(self, room_id, begin_date, end_date):
+    @staticmethod
+    def create_bill(room_id, begin_date, end_date):
         """
         创建账单
         :param room_id: 房间号
@@ -783,35 +809,71 @@ class StatisticController(models.Model):
         :param end_date: endDay
         :return:
         """
+        bill = Room.objects.filter(room_id=room_id, request_time__range=(begin_date, end_date)) \
+            .order_by('-request_time')[0]
+        print("fee=%f" % bill.fee)
 
-    def print_bill(self, room_id, begin_date, end_date):
+    @staticmethod
+    def print_bill(room_id, begin_date, end_date):
         """
         打印账单
         :param room_id: 房间号
         :param begin_date: 起始日期
         :param end_date: endDay
-        :return:
+        :return:返回房间的账单费用
         """
+        bill = Room.objects.filter(room_id=room_id, request_time__range=(begin_date, end_date)) \
+            .order_by('-request_time')[0]
+        print("fee=%f" % bill.fee)
+        return bill.fee
 
-    def print_rdr(self, room_id, begin_date, end_date):
+    @staticmethod
+    def print_rdr(room_id, begin_date, end_date):
         """
         打印详单
         :param room_id: 房间号
         :param begin_date: 起始日期
         :param end_date: endDay
-        :return:
+        :return:    返回详单字典列表
         """
+        rdr = Room.objects.filter(room_id=room_id, request_time__range=(begin_date, end_date)) \
+            .values('request_time', 'room_id', "current_temp", "target_temp", 'fan_speed', "fee")
 
-    def create_report(self, list_room_id, type_report, date):
+        return rdr
+
+    @staticmethod
+    def create_report(list_room_id, type_report, year=-1, month=-1, week=-1):
         """
         创建报告
         :param list_room_id:房间列表
-        :param type_report:报告类型
-        :param date:日期
-        :return:
+        :param type_report:报告类型,1为月报表，2为周报表
+        :param month: 如果为月报，只需填入对应的月份起始日，例如“2020-5”
+        :param week: 终止日期， 如果选择为周报表，则需要填入具体的起始日期“2020-x-x”以及终止日期“2020-x-x”
+        :return: 将返回一个pdf报表
         """
 
-    def print_report(self, list_room_id, type_report, date):
+        """
+            经理选择打印月报
+        """
+
+        OPERATION_CHOICE = [
+            (1, '调温'),
+            (2, '调风'),
+            (3, '开关机'),
+        ]
+
+        if type_report == 1:
+            for room_id in list_room_id:
+                report = Room.objects.filter(room_id=room_id, request_time__year=year, request_time__month=month)
+                detailed_num = report.count()
+                change_temp_times = report.count()
+                change_fan_times = report.distinct('fan_speed').count()
+
+
+
+
+    @staticmethod
+    def print_report(list_room_id, type_report, date):
         """
         打印报告
         :param list_room_id:房间列表
