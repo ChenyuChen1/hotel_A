@@ -46,12 +46,21 @@
 		box-shadow:5px 5px 10px rgba(0,0,0,0.2) inset;
 		border:1px solid #778899;
 	}
+	.screen{
+	    width: 300px;
+		//height:300px;
+		margin: 12px;
+		background-color:#97FFFF;
+		padding: 12px;
+		box-shadow:5px 5px 10px rgba(0,0,0,0.2) inset;
+		border:1px solid #778899;
+	}
 	#time{
 		height: 50px;
 	}
 	#temperature_box{
 
-		height:170px;
+		height:150px;
 		text-align:center;
 	}
 	#info_box{
@@ -71,7 +80,6 @@
 
 		}
 	#indoor_tmp{
-
 		}
 	#wind_speed{
 

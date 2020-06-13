@@ -127,5 +127,5 @@ USE_TZ = False
 # 增加static文件夹存放静态文件，css、js
 STATIC_URL = '/static/'
 STATICFILES_DIRS = (
-    os.path.join(BASE_DIR, 'static'),
+    os.path.join(BASE_DIR, 'statics'),
 )

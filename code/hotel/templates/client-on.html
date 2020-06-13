@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<title>Client-UI</title>
+	<link rel="stylesheet" href="/static/css/my-client.css">
+
+	<script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js">
+	</script>
+	<script src="/static/js/my-client.js"></script>
+	<script>
+//==================================================
+$(document).ready(function(){
+	$("#screen").css("background-color","#97FFFF");
+
+	//每秒自动更新时间
+	setInterval(function(){
+		var myDate = new Date();
+		var year = myDate.getFullYear();
+		var month = myDate.getMonth()+1;
+		var day = myDate.getDate();
+		var weekday = myDate.getDay();
+		var weekdayCh = new Array("日","一","二","三","四","五","六");
+		var hours = myDate.getHours();
+		var minutes = myDate.getMinutes();
+		var seconds = myDate.getSeconds();
+		if(day<10){
+			day= "0" + day;
+		}
+		if(hours<10){
+			hours = "0" + hours;
+		}
+		if(minutes<10){
+			minutes = "0" + minutes;
+		}
+		if(seconds<10){
+			seconds = "0" + seconds;
+		}
+		$("#time").text(year+"年"+month+"月"+day+"日\t星期"+weekdayCh[weekday]+"\t"+hours+":"+minutes+":"+seconds);
+	}, 1000);
+
+})//最后一个括号
+
+
+	</script>
+
+	<script type="text/javascript">
+    $(document).ready(function(){
+	//自动刷新页面,30秒
+	setTimeout(function(){
+	    location.reload();
+	}, 30000);
+
+})
+    </script>
+
+</head>
+
+
+<body>
+	<div id="container" >
+		<div id="table" width="500">
+			<table>
+				<tr>
+					<td colspan="3" id="head">
+						<h2>空调控制面板</h2>
+					</td>
+				</tr>
+				<tr>
+					<td colspan="2">
+						<div id="screen">
+							<div id="time">年月日 星期 --:--:--</div>
+							<div id="temperature_box">
+								<span id="const_set">设置温度</span>
+								<span id="temperature">{{target_temp}}℃</span>
+							</div>
+							<table id="info_box">
+								<tr>
+									<td>
+										<p id="outdoor_tmp">室外温度：{{init_temp}}℃</p>
+									</td>
+									<td>
+										<p id="wind_speed">风速：{{fan_speed}}</p>
+									</td>
+									<td>
+										<p id="room_id">房间号：{{room_id}}</p>
+									</td>
+								</tr>
+								<tr>
+									<td>
+										<div id="indoor_tmp">室内温度：{{current_temp}}℃</div>
+									</td>
+									<td>
+										<div id="fee">费用：￥{{ fee }}</div>
+									</td>
+
+								</tr>
+							</table>
+						</div>
+					</td>
+					<td>
+						<div id="wind_control">
+								<form action="/high" method="get">
+									<input id="btn_high" type="submit" value="高速">
+								</form>
+								<form action="/mid" method="get">
+									<input id="btn_mid" type="submit" value="中速">
+								</form>
+								<form action="/low" method="get">
+									<input id="btn_low" type="submit" value="低速">
+								</form>
+									<button id="btn_mode" type="button" >模式</button>
+									<button id="btn_save" type="button">保留</button>
+
+						</div>
+					</td>
+				</tr>
+				<tr>
+					<td>
+
+						<form action="/up" method="get">
+							<input id="btn_up" type="submit" value="△"></input>
+						</form>
+					</td>
+					<td>
+						<form action="/down" method="get">
+							<input id="btn_down" type="submit" value="▽"></input>
+						</form>
+					</td>
+					<td>
+						<form action="/power" method="get">
+						<!--form action="/mid" method="get"-->
+							<input id="btn_power" type="submit" value="">
+						</form>
+
+					</td>
+				</tr>
+			</table>
+		</div><!-- end of table -->
+
+
+	</div>
+</body>
+</html>

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="all,follow">
+
+    <title>设置参数 </title>
+    <link rel="shortcut icon" href="img/favicon.ico">
+
+    <!-- global stylesheets -->
+    <link href="https://fonts.googleapis.com/css?family=Roboto+Condensed" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/font-awesome-4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/static/css/font-icon-style.css">
+    <link rel="stylesheet" href="/static/css/style.default.css" id="theme-stylesheet">
+    <!-- Core stylesheets -->
+    <link rel="stylesheet" href="/static/css/form.css">
+
+</head>
+
+<body>
+    
+<!--====================================================
+                     MAIN NAVBAR
+======================================================-->
+    <header class="header">
+
+        <nav class="navbar navbar-expand-lg ">
+        <h3 class='col-sm-12' style="text-align:center">空调管理员</h3>
+        </nav>
+    </header>
+
+<!--====================================================
+                    PAGE CONTENT
+======================================================-->
+    <div class="page-content d-flex align-items-stretch">
+       
+        <!--***** SIDE NAVBAR *****-->
+        <nav class="side-navbar">
+            <div class="sidebar-header d-flex align-items-center">
+                <div class="avatar"></div>
+                <div class="title">
+                    <h4 class="h4">切换身份</h4>
+                </div>
+            </div>
+            <hr>
+            <!-- Sidebar Navidation Menus-->
+            <ul class="list-unstyled">
+                <li> <a href="index.html"><i class="icon-home"></i>前台</a></li>
+                <li> <a href="chart.html"> <i class="fa fa-bar-chart"></i>经理</a></li>
+
+            </ul><span class="heading">Extras</span>
+            <ul class="list-unstyled"> 
+                <li> <a href="#"> <i class="icon-picture"></i>Demo </a></li>
+            </ul>
+        </nav>
+
+
+
+
+
+
+        <div class="content-inner form-cont">
+            <div class="row">
+                <div class="col-md-12">
+
+                    <!--***** BASIC FORM *****-->
+                    <div class="card form" id="form1">
+                        <div class="card-header">
+                            <h5>参数设置</h5>
+                        </div>
+                        <br>
+                        <form action="/init_submit" method="get">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+
+									    <label for="exampleSelect1">模式</label>
+                                        <select class="form-control" name="mode">
+                                            <option value="cold">制冷</option>
+                                            <option value="hot">制热</option>
+                                        </select>
+										<label >温度范围</label>
+                                        <input class="form-control" name="high" placeholder="最高温度">
+                                        <input class="form-control" name="low" placeholder="最低温度">
+										<label>默认温度</label>
+                                        <input class="form-control" name="default" value="25">
+										
+										
+
+                                    </div>
+
+      
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+										<label for="exampleSelect1">默认风速</label>
+                                        <select class="form-control" id="exampleSelect1">
+                                            <option value="low">低速</option>
+                                            <option value="middle" selected>中速</option>
+											<option value="high">高速</option>
+                                        </select>
+										<label>费率（元/分钟）</label>
+                                        <input class="form-control"  value="1" name="fee_h">
+										<input class="form-control"  value="0.5" name="fee_m">
+										<input class="form-control"  value="0.3" name="fee_l">
+										<small id="emailHelp" class="form-text text-muted">这里可以写备注，但我不知道写点啥。</small>
+										
+										
+										
+
+                                    </div>
+
+
+                                </div>
+								<div class="col-md-4">
+									 <div class="form-group">
+										<label>房间初始温度</label>
+                                        <input class="form-control"  placeholder="1号" name="r1">
+										<input class="form-control"  placeholder="2号" name="r2">
+										<input class="form-control"  placeholder="3号" name="r3">
+										<input class="form-control"  placeholder="4号" name="r4">
+										<input class="form-control"  placeholder="5号" name="r5">
+
+										
+									 </div>
+								</div>
+                            </div> 
+							
+                            <input type="submit" class="btn btn-general btn-blue mr-2" value="确认提交">
+                            <button type="reset" class="btn btn-general btn-white">取消</button>
+                        </form>
+                    </div>
+
+ 
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+</body>
+
+</html>

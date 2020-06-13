@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<title>Client-UI</title>
+	<link rel="stylesheet" href="/static/css/my-client.css">
+
+	<script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js">
+	</script>
+	<script scr="/static/js/my-client.js"></script>
+	<script>
+//=========================================下面是动画演示代码========================
+/*
+$(document).ready(function(){
+	//变量
+	var on_flag = false;
+	var temperature = 26;
+	var wind_no = 1; //默认中速
+	var mode_no = 0; //默认制冷
+	var max_temperature = 30;
+	var min_temperature = 18;
+	var windCh = new Array("低速","中速","高速");
+	var modeCh = new Array("制冷","制热","除湿","送风");
+
+	//每秒自动更新时间
+	setInterval(function(){
+		var myDate = new Date();
+		var year = myDate.getFullYear();
+		var month = myDate.getMonth()+1;
+		var day = myDate.getDate();
+		var weekday = myDate.getDay();
+		var weekdayCh = new Array("日","一","二","三","四","五","六");
+		var hours = myDate.getHours();
+		var minutes = myDate.getMinutes();
+		var seconds = myDate.getSeconds();
+		if(day<10){
+			day= "0" + day;
+		}
+		if(hours<10){
+			hours = "0" + hours;
+		}
+		if(minutes<10){
+			minutes = "0" + minutes;
+		}
+		if(seconds<10){
+			seconds = "0" + seconds;
+		}
+		$("#time").text(year+"年"+month+"月"+day+"日\t星期"+weekdayCh[weekday]+"\t"+hours+":"+minutes+":"+seconds);
+	}, 1000);
+/*
+	//电源开关
+	$("#btn_power").click(function(){
+		if(Boolean(on_flag)){ //关机
+			$("#screen").css("background-color","#528B8B");
+			on_flag = false;
+			$("#temperature").html("--℃");
+			$("#wind_speed").html("风速：--");
+			$("#mode").html("模式：--");
+		}
+		else{	//开机
+			$("#screen").css("background-color","#97FFFF");
+			on_flag = true;
+			$("#temperature").html(temperature + "℃");
+			$("#wind_speed").html("风速："+windCh[wind_no]);
+			$("#mode").html("模式："+modeCh[mode_no]);
+		}
+	})
+*/
+	//升温
+	$("#btn_up").click(function(){
+		if(on_flag==false)return;
+		if(temperature<max_temperature){
+			temperature = temperature + 1;
+		}
+		$("#temperature").text(temperature + "℃");
+	})
+
+	//降温
+	$("#btn_down").click(function(){
+		if(on_flag==false)return;
+		if(temperature>min_temperature){
+			temperature = temperature - 1;
+		}
+		$("#temperature").text(temperature + "℃");
+	})
+
+	//高风
+	$("#btn_high").click(function(){
+		if(on_flag==false)return;
+		wind_no = 2;
+		$("#wind_speed").text("风速："+windCh[wind_no]);
+	})
+
+	//中风
+	$("#btn_mid").click(function(){
+		if(on_flag==false)return;
+		wind_no = 1;
+		$("#wind_speed").text("风速："+windCh[wind_no]);
+	})
+
+	//低风
+	$("#btn_low").click(function(){
+		if(on_flag==false)return;
+		wind_no = 0;
+		$("#wind_speed").text("风速："+windCh[wind_no]);
+	})
+
+	//切换模式
+	$("#btn_mode").click(function(){
+		if(on_flag==false)return;
+		mode_no = (mode_no + 1) % 4;
+		$("#mode").html("模式："+modeCh[mode_no]);
+	})
+
+
+})//最后一个括号
+*/
+//=======================下面是与后端交互的代码===========================
+$(document).ready(function(){
+	var on_flag = false;
+	//电源开关
+	$("#btn_power").click(function(){
+		if(Boolean(on_flag)){ //关机
+			$("#screen").css("background-color","#528B8B");
+			on_flag = false;
+			$("#temperature").html("--℃");
+			$("#wind_speed").html("风速：--");
+			$("#mode").html("模式：--");
+			$("#outdoor_tmp").html("室外温度：{{init_temp}}℃")
+			$("#indoor_tmp").html("室内温度：{{init_temp}}℃")
+		}
+		else{	//开机
+
+			$("#screen").css("background-color","#97FFFF");
+			on_flag = true;
+			$("#temperature").html("{{target_temp}}℃");
+			$("#wind_speed").html("风速：{{fan_speed}}");
+			$("#mode").html("模式：{{mode}}");
+			$("#outdoor_tmp").html("室外温度：{{init_temp}}℃")
+			$("#indoor_tmp").html("室内温度：{{current_temp}}℃")
+
+			//      location.reload(true)
+		}
+	})
+
+	//每秒自动更新时间
+	setInterval(function(){
+		var myDate = new Date();
+		var year = myDate.getFullYear();
+		var month = myDate.getMonth()+1;
+		var day = myDate.getDate();
+		var weekday = myDate.getDay();
+		var weekdayCh = new Array("日","一","二","三","四","五","六");
+		var hours = myDate.getHours();
+		var minutes = myDate.getMinutes();
+		var seconds = myDate.getSeconds();
+		if(day<10){
+			day= "0" + day;
+		}
+		if(hours<10){
+			hours = "0" + hours;
+		}
+		if(minutes<10){
+			minutes = "0" + minutes;
+		}
+		if(seconds<10){
+			seconds = "0" + seconds;
+		}
+		$("#time").text(year+"年"+month+"月"+day+"日\t星期"+weekdayCh[weekday]+"\t"+hours+":"+minutes+":"+seconds);
+	}, 1000);
+
+})//最后一个括号
+
+
+	</script>
+
+</head>
+
+
+<body>
+	<div id="container" >
+		<div id="table" width="500">
+			<table>
+				<tr>
+					<td colspan="3" id="head">
+						<h2>空调控制面板</h2>
+					</td>
+				</tr>
+				<tr>
+					<td colspan="2">
+						<div id="screen">
+							<div id="time">年月日 星期 --:--:--</div>
+							<div id="temperature_box">
+								<span id="const_set">设置温度</span>
+								<span id="temperature">--℃</span>
+							</div>
+							<table id="info_box">
+								<tr>
+									<td>
+										<p id="outdoor_tmp">室外温度：{{init_temp}}℃</p>
+									</td>
+									<td>
+										<p id="wind_speed">风速：--</p>
+									</td>
+									<td>
+										<p id="mode">模式：--</p>
+									</td>
+								</tr>
+								<tr>
+									<td>
+										<div id="indoor_tmp">室内温度：{{init_temp}}℃</div>
+									</td>
+									<td>
+										<div id="fee" colspan="2">费用：￥{{ fee }}</div>
+									</td>
+								</tr>
+							</table>
+						</div>
+					</td>
+					<td>
+						<div id="wind_control">
+								<form action="/high" method="get">
+									<input id="btn_high" type="submit" value="高速">
+								</form>
+								<form action="/mid" method="get">
+									<input id="btn_mid" type="submit" value="中速">
+								</form>
+								<form action="/low" method="get">
+									<input id="btn_low" type="submit" value="低速">
+								</form>
+									<button id="btn_mode" type="button" >模式</button>
+									<button id="btn_save" type="button">保留</button>
+
+						</div>
+					</td>
+				</tr>
+				<tr>
+					<td>
+
+						<form action="/up" method="get">
+							<input id="btn_up" type="submit" value="△"></input>
+						</form>
+					</td>
+					<td>
+						<form action="/down" method="get">
+							<input id="btn_down" type="submit" value="▽"></input>
+						</form>
+					</td>
+					<td>
+						<form action="/power" method="get">
+						<!--form action="/mid" method="get"-->
+							<input id="btn_power" type="submit" value=""></input>
+						</form>
+
+					</td>
+				</tr>
+			</table>
+		</div><!-- end of table -->
+		<form action="/get" method="get">
+			<div>
+				<input type="submit" name="get" value="GET">
+			</div>
+		</form>
+		<form action="/der-post" method="post">
+			{% csrf_token %}
+			<div>
+				<input type="text" name="text">
+				<input type="submit" name="submit" value="SUBMIT">
+			</div>
+		</form>
+
+	</div>
+</body>
+</html>
