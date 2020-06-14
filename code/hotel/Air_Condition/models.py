@@ -325,6 +325,8 @@ class Scheduler(models.Model):
                     self.SQ.set_target_temp(room_id, target_temp)
                 elif room.state == 2:  # 在等待队列中
                     self.WQ.set_target_temp(room_id, target_temp)
+                else: room.target_temp = target_temp
+
                 # 写入数据库
                 room.request_id = self.request_id
                 self.request_id += 1
@@ -355,6 +357,9 @@ class Scheduler(models.Model):
                     self.SQ.set_fan_speed(room_id, fan_speed, fee_rate)
                 elif room.state == 2:  # 在等待队列中
                     self.WQ.set_fan_speed(room_id, fan_speed, fee_rate)
+                else:
+                    room.fan_speed = fan_speed
+                    room.fee_rate = fee_rate
                 # 写入数据库
                 room.request_id = self.request_id
                 self.request_id += 1
@@ -427,6 +432,8 @@ class Scheduler(models.Model):
                 elif room.state == 2:  # 在等待队列中
                     room.state = 3
                     self.WQ.delete_room(room)
+                else:
+                    room.state = 3
                 # 写入数据库
                 room.request_id = self.request_id
                 self.request_id += 1
