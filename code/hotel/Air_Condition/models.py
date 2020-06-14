@@ -434,6 +434,36 @@ class Scheduler(models.Model):
                 room.request_time = timezone.now()
                 room.save(force_insert=True)
 
+                # 开启调度函数
+                if self.WQ.waiting_num != 0 and self.SQ.serving_num == 3:
+                    temp = self.SQ.room_list[0]
+                    self.SQ.delete_room(temp)
+                    self.WQ.insert(temp)
+                    temp = self.WQ.room_list[0]
+                    self.WQ.delete_room(temp)
+                    self.SQ.insert(temp)
+
+                elif self.WQ.waiting_num != 0 and self.SQ.serving_num == 2:
+                    temp = self.WQ.room_list[0]
+                    self.WQ.delete_room(temp)
+                    self.SQ.insert(temp)
+
+                elif self.WQ.waiting_num != 0 and self.SQ.serving_num <= 1:
+                    i = 1
+                    for temp in self.WQ.room_list:
+                        if i <= 2:
+                            self.WQ.delete_room(temp)
+                            self.SQ.insert(temp)
+                        i += 1
+
+                elif self.WQ.waiting_num != 0 and self.SQ.serving_num <= 0:
+                    i = 1
+                    for temp in self.WQ.room_list:
+                        if i <= 3:
+                            self.WQ.delete_room(temp)
+                            self.SQ.insert(temp)
+                        i += 1
+
                 return room
 
     # 达到目标温度后待机的房间启动回温算法
@@ -465,9 +495,18 @@ class Scheduler(models.Model):
         """
         if self.SQ.serving_num != 0:
             for room in self.SQ.room_list:
-                if abs(room.current_temp - room.target_temp) < 0.1 and room.current_temp < room.target_temp:
+                if abs(room.current_temp - room.target_temp) < 0.1 or room.current_temp < room.target_temp:
                     room.state = 4
                     self.SQ.delete_room(room)
+                    if self.default_target_temp == 22:
+                        self.back_temp(room, 1)
+                    else:
+                        self.back_temp(room, 2)
+        if self.WQ.waiting_num != 0:
+            for room in self.WQ.room_list:
+                if abs(room.current_temp - room.target_temp) < 0.1 or room.current_temp < room.target_temp:
+                    room.state = 4
+                    self.WQ.delete_room(room)
                     if self.default_target_temp == 22:
                         self.back_temp(room, 1)
                     else:
