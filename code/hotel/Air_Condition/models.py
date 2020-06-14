@@ -201,10 +201,10 @@ class Scheduler(models.Model):
     fee_rate_h = models.FloatField(verbose_name="高风速费率", default=1.0)
 
     # 低风速时的费率
-    fee_rate_l = models.FloatField(verbose_name="低风速费率", default=0.5)
+    fee_rate_l = models.FloatField(verbose_name="低风速费率", default=0.3333)
 
     # 中风速时的费率
-    fee_rate_m = models.FloatField(verbose_name="中风速费率", default=0.8)
+    fee_rate_m = models.FloatField(verbose_name="中风速费率", default=0.5)
 
     #  等待队列
     WQ = WaitingQueue()
@@ -450,7 +450,7 @@ class Scheduler(models.Model):
                 timer.start()
             else:
                 room.current_temp += 0.008
-                if abs(room.target_temp - room.current_temp) > 1:
+                if abs(room.target_temp - room.current_temp) > 1 and room.current_temp > room.target_temp:
                     if self.SQ.serving_num < 3:  # 服务队列没满
                         self.SQ.insert(room)
                     else:
@@ -465,7 +465,7 @@ class Scheduler(models.Model):
         """
         if self.SQ.serving_num != 0:
             for room in self.SQ.room_list:
-                if abs(room.current_temp - room.target_temp) < 0.1:
+                if abs(room.current_temp - room.target_temp) < 0.1 and room.current_temp < room.target_temp:
                     room.state = 4
                     self.SQ.delete_room(room)
                     if self.default_target_temp == 22:
@@ -659,7 +659,7 @@ class Room(models.Model):
     state = models.IntegerField(verbose_name='服务状态', choices=ROOM_STATE, default=3)
 
     # 费率
-    fee_rate = models.FloatField(verbose_name='费率', default=0.8)
+    fee_rate = models.FloatField(verbose_name='费率', default=0.5)
 
     # 费用
     fee = models.FloatField(verbose_name='费用', default=0.0)
@@ -950,5 +950,5 @@ class StatisticController(models.Model):
             plt.subplots_adjust(left=0.2, bottom=0.3)
             plt.xticks([])  # 加上的话会显得混乱，去掉就看的清了。
             plt.savefig('./result/report.png', dpi=300)
-            plt.show()
+            # plt.show()
             # 不显示x轴标注
