@@ -435,15 +435,8 @@ class Scheduler(models.Model):
                 room.save(force_insert=True)
 
                 # 开启调度函数
-                if self.WQ.waiting_num != 0 and self.SQ.serving_num == 3:
-                    temp = self.SQ.room_list[0]
-                    self.SQ.delete_room(temp)
-                    self.WQ.insert(temp)
-                    temp = self.WQ.room_list[0]
-                    self.WQ.delete_room(temp)
-                    self.SQ.insert(temp)
 
-                elif self.WQ.waiting_num != 0 and self.SQ.serving_num == 2:
+                if self.WQ.waiting_num != 0 and self.SQ.serving_num == 2:
                     temp = self.WQ.room_list[0]
                     self.WQ.delete_room(temp)
                     self.SQ.insert(temp)
